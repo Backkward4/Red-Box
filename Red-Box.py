@@ -41,9 +41,10 @@ while running:
     redbox.velocity -= gravity
     
     screen.fill((110, 179, 210))
-    pygame.draw.rect(screen, (131, 31, 31), redbox)
+    rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
+    pygame.draw.rect(screen, (131, 31, 31), rb_screen)
     
-    redbox_inner = redbox.rect.inflate(-10, -10)
+    redbox_inner = rb_screen.inflate(-10, -10)
     pygame.draw.rect(screen, (251, 53, 38), redbox_inner)
 
     bgrect = playerBox(1)
@@ -55,7 +56,7 @@ while running:
     redbox.pos += redbox.velocity*dT
     #print(redbox.pos)
 
-    redbox_maxspeed = 250
+    redbox_maxspeed = 150
     movementEasing = 20
 
     def lerp(start, end, amt):
@@ -79,14 +80,16 @@ while running:
         else:
             redbox.velocity.x = 0
             
-    if redbox.pos.y + redbox.size/2 > window.y/2:
+    if redbox.pos.y + redbox.size/2 > 0:
         if keyboard.is_pressed("w"):
             redbox.velocity.y = -275
         else:
             redbox.velocity.y = 0
-            redbox.pos.y = window.y/2 - redbox.size/2
+            redbox.pos.y = 0 - redbox.size/2
 
-    #camera.y -= 2
+    cam_easing = 20
+    camera.x = lerp(camera.x, -redbox.pos.x*2 - wc.x, cam_easing)
+    camera.y = lerp(camera.y, -redbox.pos.y*2 - wc.y + 60, cam_easing)
 
     #print(camera)
     
