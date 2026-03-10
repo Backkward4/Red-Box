@@ -40,8 +40,11 @@ while running:
 
     redbox.velocity -= gravity
     
-    screen.fill((0, 0, 0))
-    pygame.draw.rect(screen, (251, 53, 38), redbox)
+    screen.fill((110, 179, 210))
+    pygame.draw.rect(screen, (131, 31, 31), redbox)
+    
+    redbox_inner = redbox.rect.inflate(-10, -10)
+    pygame.draw.rect(screen, (251, 53, 38), redbox_inner)
 
     bgrect = playerBox(1)
     pygame.draw.rect(screen, (11, 11, 11), bgrect)
