@@ -61,18 +61,18 @@ async def main():
 
         #   draws redbox where it should be on the screen
         rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
-        pygame.draw.rect(screen, (131, 31, 31), rb_screen)
+#        pygame.draw.rect(screen, (131, 31, 31), rb_screen)
         rb_image = pygame.transform.rotate(assets["box"], redbox.rotation)
-        rb_pos = (redbox.pos.x + wc.x, redbox.pos.y + wc.y)
+        rb_pos = (rb_screen.x + redbox.size/2, rb_screen.y + redbox.size/2)
         rb_rect = rb_image.get_rect(center = rb_pos)
 
-        screen.blit(rb_image, rb_screen)
+        screen.blit(rb_image, rb_rect)
 
         redbox.rotation += 1
         
         #   creates the border on the player
         redbox_inner = rb_screen.inflate(-10, -10)
-        pygame.draw.rect(screen, (251, 53, 38), redbox_inner)
+#        pygame.draw.rect(screen, (251, 53, 38), redbox_inner)
     
         #   world center box (for reference, will be removed once maps work)
         bgrect = playerBox(1)
