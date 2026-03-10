@@ -52,12 +52,36 @@ while running:
     redbox.pos += redbox.velocity*dT
     #print(redbox.pos)
 
-    if keyboard.is_pressed("w"):
-        redbox.velocity.y = -250
+    redbox_maxspeed = 250
+    movementEasing = 20
+
+    def lerp(a, b, t):
+        return (a*(1/t)- b)/(1/t)+1
+
+    if keyboard.is_pressed("a") or keyboard.is_pressed("d"):
+
+        if keyboard.is_pressed("a"):
+            redbox.velocity.x = (redbox.velocity.x * movementEasing - redbox_maxspeed)/ movementEasing + 1
+            redbox.velocity.x = max(redbox.velocity.x, -redbox_maxspeed)
         
-    if redbox.pos.y + redbox.size/2 > window.y/2 + 1:
-        redbox.velocity.y = 0
-        redbox.pos.y = window.y/2 - redbox.size/2
+        if keyboard.is_pressed("d"):
+            redbox.velocity.x = (redbox.velocity.x * movementEasing + redbox_maxspeed)/ movementEasing + 1
+            redbox.velocity.x = min(redbox.velocity.x, redbox_maxspeed)
+        
+    else:
+        if redbox.velocity.x > 0.1:
+            redbox.velocity.x = (redbox.velocity.x * movementEasing - redbox_maxspeed)/ movementEasing + 1
+        elif redbox.velocity.x < -0.1:
+            redbox.velocity.x = (redbox.velocity.x * movementEasing + redbox_maxspeed)/ movementEasing + 1
+        else:
+            redbox.velocity.x = 0
+            
+    if redbox.pos.y + redbox.size/2 > window.y/2:
+        if keyboard.is_pressed("w"):
+            redbox.velocity.y = -250
+        else:
+            redbox.velocity.y = 0
+            redbox.pos.y = window.y/2 - redbox.size/2
 
     #camera.y -= 2
 
