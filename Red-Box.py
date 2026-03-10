@@ -1,4 +1,5 @@
 import pygame
+import sys
 from pygame.locals import QUIT
 from pygame.math import Vector2
 
@@ -12,7 +13,9 @@ center = Vector2(window.x/2, window.y/2)
 camera = Vector2(0, 0)
 wc = center + camera
 
-gravity = Vector2(0, -0.91)
+gravity = Vector2(0, -9.81)
+
+clock = pygame.time.Clock()
 
 class playerBox:
     def __init__(self, rect):
@@ -29,19 +32,24 @@ while running:
     for event in pygame.event.get():
         if event.type == QUIT: # Exit when the window is closed
             running = False
+            
+    wc = center + camera
+    dT = clock.tick(60) / 1000.0
 
-    redbox.velocity -= gravity*0.05
+    redbox.velocity -= gravity
     
     screen.fill((0, 0, 0))
     pygame.draw.rect(screen, (251, 53, 38), redbox)
 
-    redbox.rect.x = wc.x - redbox.size/2 + redbox.pos.x
-    redbox.rect.y = wc.y - redbox.size/2 + redbox.pos.y
+    redbox.rect.x = wc.x - redbox.size/2 + redbox.pos.x - camera.x
+    redbox.rect.y = wc.y - redbox.size/2 + redbox.pos.y - camera.y
 
-    redbox.pos += redbox.velocity
-    print(redbox.velocity)
-    #redbox.x += rb_velocity.x
-    #redbox.y += rb_velocity.y
+    redbox.pos += redbox.velocity*dT
+    #print(redbox.pos)
+
+    #camera.y -= 2
+
+    #print(camera)
     
     pygame.display.flip()
     
