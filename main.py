@@ -34,6 +34,7 @@ class playerBox:
         self.pos = Vector2()
         self.velocity = Vector2(0, 0)
         self.rotation = 0
+        self.rotationSpeed = 0
 
 redbox = playerBox(0)
 
@@ -62,13 +63,15 @@ async def main():
         #   draws redbox where it should be on the screen
         rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
 #        pygame.draw.rect(screen, (131, 31, 31), rb_screen)
-        rb_image = pygame.transform.rotate(assets["box"], redbox.rotation)
-        rb_pos = (rb_screen.x + redbox.size/2, rb_screen.y + redbox.size/2)
+        rb_image = pygame.transform.scale(assets["box"], (redbox.size, redbox.size))
+        rb_image = pygame.transform.rotate(rb_image, redbox.rotation)
+        rb_pos = (
+            rb_screen.x + redbox.size/2,
+            rb_screen.y + redbox.size/2
+            )
         rb_rect = rb_image.get_rect(center = rb_pos)
 
         screen.blit(rb_image, rb_rect)
-
-        redbox.rotation += 1
         
         #   creates the border on the player
         redbox_inner = rb_screen.inflate(-10, -10)
@@ -114,14 +117,22 @@ async def main():
                 redbox.velocity.x = lerp(redbox.velocity.x, redbox_maxspeed, movementEasing)
             else:
                 redbox.velocity.x = 0
-    
+
+        #   changes redbox rotation
+        redbox.rotation -= (redbox.rotationSpeed / (redbox.size/2/100))/180
+        print(redbox.rotationSpeed)
+
         #   handles jumping and ground collision, be changed once actual objects are added
         if redbox.pos.y + redbox.size/2 > 0:
+            redbox.rotationSpeed = redbox.velocity.x*2
+            
             if keyboard.is_pressed("w"):
                 redbox.velocity.y = -230
             else:
                 redbox.velocity.y = 0
                 redbox.pos.y = 0 - redbox.size/2
+        else:
+            redbox.rotationSpeed = redbox.rotationSpeed/1.025 + redbox.velocity.x/25
     
         cam_easing = 20
         camera.x = lerp(camera.x, -redbox.pos.x*2 - wc.x - redbox.size/2, cam_easing)
