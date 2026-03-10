@@ -1,11 +1,12 @@
 import pygame
 import sys
+import keyboard
 from pygame.locals import QUIT
 from pygame.math import Vector2
 
 pygame.init()
 
-window = Vector2(640, 480)
+window = Vector2(1000, 600)
 screen = pygame.display.set_mode((window.x, window.y))
 pygame.display.set_caption("RED BOX")
 center = Vector2(window.x/2, window.y/2)
@@ -23,6 +24,7 @@ class playerBox:
         self.rect = pygame.Rect(wc.x - self.size/2, wc.y - self.size/2, self.size, self.size)
         self.pos = Vector2()
         self.velocity = Vector2(0, 0)
+        self.rotation = 0
 
 redbox = playerBox(0)
 
@@ -41,11 +43,21 @@ while running:
     screen.fill((0, 0, 0))
     pygame.draw.rect(screen, (251, 53, 38), redbox)
 
+    bgrect = playerBox(1)
+    pygame.draw.rect(screen, (11, 11, 11), bgrect)
+
     redbox.rect.x = wc.x - redbox.size/2 + redbox.pos.x - camera.x
     redbox.rect.y = wc.y - redbox.size/2 + redbox.pos.y - camera.y
 
     redbox.pos += redbox.velocity*dT
     #print(redbox.pos)
+
+    if keyboard.is_pressed("w"):
+        redbox.velocity.y = -250
+        
+    if redbox.pos.y + redbox.size/2 > window.y/2 + 1:
+        redbox.velocity.y = 0
+        redbox.pos.y = window.y/2 - redbox.size/2
 
     #camera.y -= 2
 
