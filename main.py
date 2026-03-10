@@ -15,8 +15,14 @@ pygame.display.set_caption("RED BOX")
 base_path = os.path.dirname(__file__)
 
 assets = {
-    "box": pygame.image.load(os.path.join(base_path, "assets", "box.png")).convert_alpha()
+    "box": pygame.image.load(os.path.join(base_path, "assets", "box.png")).convert_alpha(),
+    "cloud1": pygame.image.load(os.path.join(base_path, "assets", "cloud1.png")).convert_alpha(),
+    "cloud2": pygame.image.load(os.path.join(base_path, "assets", "cloud2.png")).convert_alpha(),
+    "DayFace": pygame.image.load(os.path.join(base_path, "assets", "DayFace.png")).convert_alpha()
 }
+
+window_icon = pygame.transform.scale(assets["box"], (32, 32))
+pygame.display.set_icon(window_icon)
 
 center = Vector2(window.x/2, window.y/2)
 camera = Vector2(0, 0)
@@ -60,9 +66,21 @@ async def main():
         #   background
         screen.fill((110, 179, 210))
 
+
+        #   background elements
+        bg_face_size = 450
+        bg_face = pygame.transform.scale(assets["DayFace"], (bg_face_size, bg_face_size))
+        bg_face_pos = Vector2(
+            camera.x/50 + wc.x/50 + window.x/2 - bg_face_size/2 + 225,
+            camera.y/50 + wc.y/50 + window.y/2 - bg_face_size/2 + 160
+            )
+        bg_face_rect = bg_face.get_rect(center = bg_face_pos)
+
+        screen.blit(bg_face, bg_face_rect)
+        
+
         #   draws redbox where it should be on the screen
         rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
-#        pygame.draw.rect(screen, (131, 31, 31), rb_screen)
         rb_image = pygame.transform.scale(assets["box"], (redbox.size, redbox.size))
         rb_image = pygame.transform.rotate(rb_image, redbox.rotation)
         rb_pos = (
@@ -72,10 +90,6 @@ async def main():
         rb_rect = rb_image.get_rect(center = rb_pos)
 
         screen.blit(rb_image, rb_rect)
-        
-        #   creates the border on the player
-        redbox_inner = rb_screen.inflate(-10, -10)
-#        pygame.draw.rect(screen, (251, 53, 38), redbox_inner)
     
         #   world center box (for reference, will be removed once maps work)
         bgrect = playerBox(1)
@@ -91,7 +105,6 @@ async def main():
         redbox.rect.y = wc.y - redbox.size/2 + redbox.pos.y - camera.y
     
         redbox.pos += redbox.velocity*dT
-        #print(redbox.pos) # (debug)
     
         redbox_maxspeed = 150
         movementEasing = 20
@@ -120,14 +133,13 @@ async def main():
 
         #   changes redbox rotation
         redbox.rotation -= (redbox.rotationSpeed / (redbox.size/2/100))/180
-        print(redbox.rotationSpeed)
 
         #   handles jumping and ground collision, be changed once actual objects are added
         if redbox.pos.y + redbox.size/2 > 0:
             redbox.rotationSpeed = redbox.velocity.x*2
             
             if keyboard.is_pressed("w"):
-                redbox.velocity.y = -230
+                redbox.velocity.y = -210
             else:
                 redbox.velocity.y = 0
                 redbox.pos.y = 0 - redbox.size/2
@@ -137,9 +149,7 @@ async def main():
         cam_easing = 20
         camera.x = lerp(camera.x, -redbox.pos.x*2 - wc.x - redbox.size/2, cam_easing)
         camera.y = lerp(camera.y, -redbox.pos.y*2 - wc.y + 60 - redbox.size/2, cam_easing)
-    
-        #print(camera) # (debug)
-        
+                
         pygame.display.flip()
         
     # Quit PyGame
