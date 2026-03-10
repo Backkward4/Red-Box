@@ -2,6 +2,7 @@ import pygame
 import sys
 import keyboard
 import asyncio
+import os
 from pygame.locals import QUIT
 from pygame.math import Vector2
 
@@ -10,8 +11,14 @@ pygame.init()
 window = Vector2(1000, 600)
 screen = pygame.display.set_mode((window.x, window.y))
 pygame.display.set_caption("RED BOX")
-center = Vector2(window.x/2, window.y/2)
 
+base_path = os.path.dirname(__file__)
+
+assets = {
+    "box": pygame.image.load(os.path.join(base_path, "assets", "box.png")).convert_alpha()
+}
+
+center = Vector2(window.x/2, window.y/2)
 camera = Vector2(0, 0)
 wc = center + camera
 
@@ -51,9 +58,18 @@ async def main():
     
         #   background
         screen.fill((110, 179, 210))
+
+        #   draws redbox where it should be on the screen
         rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
         pygame.draw.rect(screen, (131, 31, 31), rb_screen)
-    
+        rb_image = pygame.transform.rotate(assets["box"], redbox.rotation)
+        rb_pos = (redbox.pos.x + wc.x, redbox.pos.y + wc.y)
+        rb_rect = rb_image.get_rect(center = rb_pos)
+
+        screen.blit(rb_image, rb_screen)
+
+        redbox.rotation += 1
+        
         #   creates the border on the player
         redbox_inner = rb_screen.inflate(-10, -10)
         pygame.draw.rect(screen, (251, 53, 38), redbox_inner)
@@ -62,7 +78,10 @@ async def main():
         bgrect = playerBox(1)
         bgrect.size = 200
         bgrect.rect = bgrect.rect.inflate(160, 160)
-        bgrect.rect = bgrect.rect.move(bgrect.pos.x + wc.x , bgrect.pos.y + wc.y + bgrect.size/2-20)
+        bgrect.rect = bgrect.rect.move(
+            bgrect.pos.x + wc.x, bgrect.pos.y + wc.y + bgrect.size/2-20
+            )
+        
         pygame.draw.rect(screen, (11, 11, 11), bgrect)
     
         redbox.rect.x = wc.x - redbox.size/2 + redbox.pos.x - camera.x
@@ -99,7 +118,7 @@ async def main():
         #   handles jumping and ground collision, be changed once actual objects are added
         if redbox.pos.y + redbox.size/2 > 0:
             if keyboard.is_pressed("w"):
-                redbox.velocity.y = -275
+                redbox.velocity.y = -230
             else:
                 redbox.velocity.y = 0
                 redbox.pos.y = 0 - redbox.size/2
