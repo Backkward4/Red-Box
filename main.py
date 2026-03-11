@@ -19,7 +19,8 @@ assets = {
     "box": pygame.image.load(os.path.join(base_path, "assets", "box.png")).convert_alpha(),
     "cloud1": pygame.image.load(os.path.join(base_path, "assets", "cloud1.png")).convert_alpha(),
     "cloud2": pygame.image.load(os.path.join(base_path, "assets", "cloud2.png")).convert_alpha(),
-    "DayFace": pygame.image.load(os.path.join(base_path, "assets", "DayFace.png")).convert_alpha()
+    "DayFace": pygame.image.load(os.path.join(base_path, "assets", "DayFace.png")).convert_alpha(),
+    "DayBG": pygame.image.load(os.path.join(base_path, "assets", "DayBG.png")).convert_alpha()
 }
 
 window_icon = pygame.transform.scale(assets["box"], (32, 32))
@@ -65,8 +66,14 @@ async def main():
         #   applies gravity constantly
         redbox.velocity -= gravity
     
-        #   background
+        #   fallback background
         screen.fill((110, 179, 210))
+
+        #   actual background
+        bg_image = pygame.transform.scale(assets["DayBG"], (window.x, window.y))
+        bg_pos = Vector2(window.x/2, window.y/2)
+        bg_rect = bg_image.get_rect(center = bg_pos)
+        screen.blit(bg_image, bg_rect)
 
 
         #   background elements
