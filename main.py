@@ -23,6 +23,10 @@ assets = {
     "DayBG": pygame.image.load(os.path.join(base_path, "assets", "DayBG.png")).convert_alpha()
 }
 
+maps = {
+    "testlevel": pygame.image.load(os.path.join(base_path, "maps", "testlevel.png")).convert_alpha()
+}
+
 window_icon = pygame.transform.scale(assets["box"], (32, 32))
 pygame.display.set_icon(window_icon)
 
@@ -33,6 +37,17 @@ wc = center + camera
 gravity = Vector2(0, -9.81)
 
 clock = pygame.time.Clock()
+cur_map = pygame.image.load(os.path.join(base_path, "maps", "testlevel.png")).convert_alpha()
+cur_map_rect = cur_map.get_rect(center = wc + camera + Vector2(
+        cur_map.get_height()/2, cur_map.get_width()/2))
+                                
+def updateMap(name):
+    cur_map = maps[name]
+    cur_map_rect = cur_map.get_rect(center = wc + camera + Vector2(
+        cur_map.get_height()/2, cur_map.get_width()/2)
+                                    )
+    
+    screen.blit(cur_map, cur_map_rect)
 
 #   custom class for the player, might be simplified for all objects to use polygon instead
 class playerBox:
@@ -124,7 +139,7 @@ async def main():
                     assets["cloud" + str(random.randint(1, 2))], self.scale
                     )
 
-        #print(len(cloud_group))
+        updateMap("testlevel")
         
         if len(cloud_group) < cloud_amount:
             newcloud = Cloud(random.uniform(200, 600), random.uniform(-100, -200))
@@ -192,18 +207,29 @@ async def main():
         redbox.rotation -= (redbox.rotationSpeed / (redbox.size/2/100))/180
 
         #   handles jumping and ground collision, be changed once actual objects are added
-        if redbox.pos.y + redbox.size/2 > 0:
+        #if redbox.pos.y + redbox.size/2 > 0:
+        redbox_mask = pygame.mask.from_surface(rb_image)
+        cur_map_mask = pygame.mask.from_surface(cur_map)
+        
+        #cur_map_rect = cur_map.get_rect()
+
+        offset_x = cur_map_rect.x - rb_rect.x
+        offset_y = cur_map_rect.y - rb_rect.y
+        
+        if redbox_mask.overlap(cur_map_mask, (offset_x, offset_y)):
+            print("collision")
             redbox.rotationSpeed = redbox.velocity.x*2
             
             if keyboard.is_pressed("w"):
-                redbox.velocity.y = -215
+                redbox.velocity.y = -175 # jump height
             else:
-                redbox.velocity.y = 0
-                redbox.pos.y = 0 - redbox.size/2
+                redbox.velocity.y *= -0.125
+                #redbox.velocity.y = 0
+                #redbox.pos.y = 0 - redbox.size/2
         else:
             redbox.rotationSpeed = redbox.rotationSpeed/1.05 + redbox.velocity.x/25
     
-        cam_easing = 20
+        cam_easing = 10
         camera.x = lerp(camera.x, -redbox.pos.x*2 - wc.x - redbox.size/2, cam_easing)
         camera.y = lerp(camera.y, -redbox.pos.y*2 - wc.y + 60 - redbox.size/2, cam_easing)
                 
