@@ -49,6 +49,7 @@ redbox = playerBox(0)
 
 
 async def main():
+    cloud_group = pygame.sprite.Group()
     running = True
     while running:
         for event in pygame.event.get():
@@ -81,34 +82,46 @@ async def main():
 
 
         # Clouds
-        cloud_positions = []
-        cloud_scales = []
-        cloud_types = []
-
-        cloud_minsize = 110
-        cloud_maxsize = 200
-        cloud_amount = 20
+        cloud_amount = 3
+        cloud_minsize = 1
+        cloud_maxsize = 1
         
+        class Cloud(pygame.sprite.Sprite):
+            def __init__(self, x, y):
+                pygame.sprite.Sprite.__init__(self)
+                self.scale = Vector2(
+                    random.uniform(cloud_minsize, cloud_maxsize),
+                    random.uniform(cloud_minsize, cloud_maxsize)/2
+                    )
+                print(self.scale)
+                self.image = assets["cloud" + str(random.randint(1, 2))]
+                self.image_scaled = pygame.transform.scale(
+                    assets["cloud" + str(random.randint(1, 2))], self.scale
+                    )
+                self.speed = random.uniform(0.2, 1)
+                self.rect = self.image_scaled.get_rect()
+                self.temp_center = [x, y]
+                self.rect.center = Vector2(
+            camera.x/5 + wc.x/5 + window.x/2 - self.scale.x/2 + self.temp_center[0],
+            camera.y/5 + wc.y/5 + window.y/2 - self.scale.y/2 + self.temp_center[1]
+            )
 
-        if len(cloud_positions) < cloud_amount-1:
-                cloud_types.append(random.randint(1, 2))
-                cloud_scales.append(Vector2(
-                        random.uniform(cloud_minsize, cloud_maxsize),
-                        random.uniform(cloud_minsize, cloud_maxsize)/2))          
-                cloud_positions.append(Vector2(225, random.uniform(100, 200)))
-            
-        for i in range(len(cloud_positions)):
-            d = 5
-            cloud_positions[i].x += 2
-            tempcloud = pygame.transform.scale(assets["cloud" + str(cloud_types[i])], cloud_scales[i])
-            tempcloud_pos = Vector2(
-                camera.x/d + wc.x/d + window.x/2 - bg_face_size/2 + cloud_positions[i].x,
-                camera.y/d + wc.y/d + window.y/2 - bg_face_size/2 + cloud_positions[i].x
-                )
-            cloud_rect = tempcloud.get_rect(center = tempcloud_pos)
-                                     
-            screen.blit(tempcloud, cloud_rect)
+            def update(self):
+                self.temp_center[0] -= 1
+                self.rect.center = Vector2(
+            camera.x/15 + wc.x/15 + window.x/2 - self.scale.x/2 + self.temp_center[0],
+            camera.y/15 + wc.y/15 + window.y/2 - self.scale.y/2 + self.temp_center[1]
+            )
+                self.image.set_alpha(abs(self.rect.center[0] - bg_face_pos.x + bg_face_size/8)/3)
+                self.image_scaled = pygame.transform.scale(
+                    assets["cloud" + str(random.randint(1, 2))], self.scale
+                    )
+
+        #print(len(cloud_group))
         
+        if len(cloud_group) < cloud_amount:
+            newcloud = Cloud(random.uniform(200, 600), random.uniform(-100, -200))
+            cloud_group.add(newcloud)
 
         #   draws redbox where it should be on the screen
         rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
@@ -119,6 +132,12 @@ async def main():
             rb_screen.y + redbox.size/2
             )
         rb_rect = rb_image.get_rect(center = rb_pos)
+
+
+        cloud_group.update()
+        cloud_group.draw(screen)
+
+
 
         screen.blit(rb_image, rb_rect)
     
@@ -137,7 +156,7 @@ async def main():
     
         redbox.pos += redbox.velocity*dT
     
-        redbox_maxspeed = 160
+        redbox_maxspeed = 200
         movementEasing = 20
     
         def lerp(start, end, amt):
