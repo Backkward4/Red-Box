@@ -3,6 +3,7 @@ import sys
 import keyboard
 import asyncio
 import os
+import random
 from pygame.locals import QUIT
 from pygame.math import Vector2
 
@@ -77,6 +78,36 @@ async def main():
         bg_face_rect = bg_face.get_rect(center = bg_face_pos)
 
         screen.blit(bg_face, bg_face_rect)
+
+
+        # Clouds
+        cloud_positions = []
+        cloud_scales = []
+        cloud_types = []
+
+        cloud_minsize = 110
+        cloud_maxsize = 200
+        cloud_amount = 20
+        
+
+        if len(cloud_positions) < cloud_amount-1:
+                cloud_types.append(random.randint(1, 2))
+                cloud_scales.append(Vector2(
+                        random.uniform(cloud_minsize, cloud_maxsize),
+                        random.uniform(cloud_minsize, cloud_maxsize)/2))          
+                cloud_positions.append(Vector2(225, random.uniform(100, 200)))
+            
+        for i in range(len(cloud_positions)):
+            d = 5
+            cloud_positions[i].x += 2
+            tempcloud = pygame.transform.scale(assets["cloud" + str(cloud_types[i])], cloud_scales[i])
+            tempcloud_pos = Vector2(
+                camera.x/d + wc.x/d + window.x/2 - bg_face_size/2 + cloud_positions[i].x,
+                camera.y/d + wc.y/d + window.y/2 - bg_face_size/2 + cloud_positions[i].x
+                )
+            cloud_rect = tempcloud.get_rect(center = tempcloud_pos)
+                                     
+            screen.blit(tempcloud, cloud_rect)
         
 
         #   draws redbox where it should be on the screen
@@ -106,7 +137,7 @@ async def main():
     
         redbox.pos += redbox.velocity*dT
     
-        redbox_maxspeed = 150
+        redbox_maxspeed = 160
         movementEasing = 20
     
         def lerp(start, end, amt):
@@ -139,12 +170,12 @@ async def main():
             redbox.rotationSpeed = redbox.velocity.x*2
             
             if keyboard.is_pressed("w"):
-                redbox.velocity.y = -210
+                redbox.velocity.y = -215
             else:
                 redbox.velocity.y = 0
                 redbox.pos.y = 0 - redbox.size/2
         else:
-            redbox.rotationSpeed = redbox.rotationSpeed/1.025 + redbox.velocity.x/25
+            redbox.rotationSpeed = redbox.rotationSpeed/1.05 + redbox.velocity.x/25
     
         cam_easing = 20
         camera.x = lerp(camera.x, -redbox.pos.x*2 - wc.x - redbox.size/2, cam_easing)
