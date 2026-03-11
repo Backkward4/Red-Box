@@ -12,6 +12,8 @@ pygame.init()
 window = Vector2(1000, 600)
 screen = pygame.display.set_mode((window.x, window.y))
 pygame.display.set_caption("RED BOX")
+pygame.mouse.set_visible(False)
+
 
 base_path = os.path.dirname(__file__)
 
@@ -37,15 +39,18 @@ wc = center + camera
 gravity = Vector2(0, -9.81)
 
 clock = pygame.time.Clock()
-cur_map = pygame.image.load(os.path.join(base_path, "maps", "testlevel.png")).convert_alpha()
+cur_map = maps["testlevel"]
 cur_map_rect = cur_map.get_rect(center = wc + camera + Vector2(
         cur_map.get_height()/2, cur_map.get_width()/2))
+cur_map_pos = Vector2(0, 0)
                                 
 def updateMap(name):
     cur_map = maps[name]
-    cur_map_rect = cur_map.get_rect(center = wc + camera + Vector2(
-        cur_map.get_height()/2, cur_map.get_width()/2)
-                                    )
+    cur_map_pos = Vector2(
+        cur_map.get_height()/2,
+        cur_map.get_width()/2+150
+        )
+    cur_map_rect = cur_map.get_rect(center = wc + camera + cur_map_pos)
     
     screen.blit(cur_map, cur_map_rect)
 
@@ -139,6 +144,12 @@ async def main():
                     assets["cloud" + str(random.randint(1, 2))], self.scale
                     )
 
+        cur_map_pos = Vector2(
+            cur_map.get_height()/2,
+            cur_map.get_width()/2+150
+            )
+        cur_map_rect = cur_map.get_rect(center = wc + camera + cur_map_pos)
+
         updateMap("testlevel")
         
         if len(cloud_group) < cloud_amount:
@@ -209,12 +220,19 @@ async def main():
         #   handles jumping and ground collision, be changed once actual objects are added
         #if redbox.pos.y + redbox.size/2 > 0:
         redbox_mask = pygame.mask.from_surface(rb_image)
+        actual_redbox_mask = redbox_mask.to_surface()
+        screen.blit(actual_redbox_mask, Vector2(rb_pos[0] - redbox.size/2,
+                                                rb_pos[1] - redbox.size/2))
+
+
         cur_map_mask = pygame.mask.from_surface(cur_map)
+        actual_map_mask = cur_map_mask.to_surface()
+        screen.blit(actual_map_mask, (wc + camera + cur_map_pos))
         
         #cur_map_rect = cur_map.get_rect()
 
-        offset_x = cur_map_rect.x - rb_rect.x
-        offset_y = cur_map_rect.y - rb_rect.y
+        offset_x = cur_map_rect.x - rb_pos[0]
+        offset_y = cur_map_rect.y - rb_pos[1]
         
         if redbox_mask.overlap(cur_map_mask, (offset_x, offset_y)):
             print("collision")
@@ -223,13 +241,13 @@ async def main():
             if keyboard.is_pressed("w"):
                 redbox.velocity.y = -175 # jump height
             else:
-                redbox.velocity.y *= -0.125
+                redbox.velocity.y *= 0
                 #redbox.velocity.y = 0
                 #redbox.pos.y = 0 - redbox.size/2
         else:
             redbox.rotationSpeed = redbox.rotationSpeed/1.05 + redbox.velocity.x/25
     
-        cam_easing = 10
+        cam_easing = 2
         camera.x = lerp(camera.x, -redbox.pos.x*2 - wc.x - redbox.size/2, cam_easing)
         camera.y = lerp(camera.y, -redbox.pos.y*2 - wc.y + 60 - redbox.size/2, cam_easing)
                 
