@@ -45,32 +45,31 @@ class Map(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.image = maps["testlevel"]
-        self.rect = self.image.get_rect()
+        #self.image = pygame.transform.scale(maps["testlevel"], (2000, 800))
+        self.rect = self.image.get_rect(topleft = (x, y))
         self.pos = Vector2()
         self.mask = pygame.mask.from_surface(self.image)
 
     def update(self, maptitle):
         self.image = maps[maptitle]
-        self.pos = Vector2(
-            self.image.get_height()/2,
-            self.image.get_width()/2+150
-            )
-        self.rect = self.image.get_rect(center = wc + camera + self.pos)
-        self.mask = pygame.mask.from_surface(self.image)
-cur_map = Map(window.x/2, window.y/2)
+        
+cur_map = Map(0, 0)
 
 #   custom class for the player, might be simplified for all objects to use polygon instead
 class playerBox(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = assets["box"]
         self.size = 40
-        self.rect = pygame.Rect(wc.x - self.size/2, wc.y - self.size/2, self.size, self.size)
+        self.image = assets["box"]
+        self.image = pygame.transform.scale(self.image, (self.size, self.size))
+        #self.rect = pygame.Rect(wc.x - self.size/2, wc.y - self.size/2, self.size, self.size)
+        self.rect = self.image.get_rect(topleft = (x, y))
         self.pos = Vector2()
         self.mask = pygame.mask.from_surface(self.image)
         self.velocity = Vector2(0, 0)
         self.rotation = 0
         self.rotationSpeed = 0
+        
 redbox = playerBox(window.x/2, window.y/2)
 
 rb_group = pygame.sprite.Group()
@@ -129,7 +128,7 @@ async def main():
                     random.uniform(cloud_minsize, cloud_maxsize),
                     random.uniform(cloud_minsize, cloud_maxsize)/2
                     )
-                print(self.scale)
+                #print(self.scale)
                 self.image = assets["cloud" + str(random.randint(1, 2))]
                 self.image_scaled = pygame.transform.scale(
                     assets["cloud" + str(random.randint(1, 2))], self.scale
@@ -153,33 +152,53 @@ async def main():
                     assets["cloud" + str(random.randint(1, 2))], self.scale
                     )
 
-        cur_map.update("testlevel")
-        map_group.draw(screen)
+
+        cur_map.pos = wc + Vector2(
+            cur_map.image.get_width()/2,
+            cur_map.image.get_height()/2
+            )
+        cur_map.rect = cur_map.image.get_rect(center = cur_map.pos)
+        #cur_map.mask = pygame.mask.from_surface(cur_map.image)
+        
+        #cur_map.update("testlevel")
+        #map_group.draw(screen)
+        screen.blit(cur_map.image, cur_map.rect.topleft)
+
         
         if len(cloud_group) < cloud_amount:
             newcloud = Cloud(random.uniform(200, 600), random.uniform(-100, -200))
             cloud_group.add(newcloud)
 
         #   draws redbox where it should be on the screen
-        rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
-        rb_image = pygame.transform.scale(assets["box"], (redbox.size, redbox.size))
-        rb_image = pygame.transform.rotate(rb_image, redbox.rotation)
-        rb_pos = (
-            rb_screen.x + redbox.size/2,
-            rb_screen.y + redbox.size/2
-            )
-        rb_rect = rb_image.get_rect(center = rb_pos)
+ #       rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
+ #       rb_image = pygame.transform.scale(assets["box"], (redbox.size, redbox.size))
+ #       rb_image = pygame.transform.rotate(rb_image, redbox.rotation)
+ #       rb_pos = (
+ #           rb_screen.x + redbox.size/2,
+ #           rb_screen.y + redbox.size/2
+ #           )
+ #       rb_rect = rb_image.get_rect(center = rb_pos)
 
         cloud_group.update()
         cloud_group.draw(screen)
 
-        screen.blit(rb_image, rb_rect)
-    
-        redbox.rect.x = wc.x - redbox.size/2 + redbox.pos.x - camera.x
-        redbox.rect.y = wc.y - redbox.size/2 + redbox.pos.y - camera.y
-    
+        #screen.blit(rb_image, rb_rect.topleft)
+
         redbox.pos += redbox.velocity*dT
-    
+        rb_rotated = pygame.transform.rotate(redbox.image, redbox.rotation)
+
+        redbox.rect.center = redbox.pos
+        target_center = wc - camera + redbox.pos + wc/2 + Vector2(
+            redbox.size,
+            redbox.size)/2
+        
+        redbox_old_center = redbox.rect.center
+        redbox.rect = rb_rotated.get_rect(center = target_center)
+        
+        screen.blit(rb_rotated, redbox.rect.topleft)
+
+        redbox.mask = pygame.mask.from_surface(rb_rotated)
+        
         redbox_maxspeed = 200
         movementEasing = 20
     
@@ -209,23 +228,28 @@ async def main():
         redbox.rotation -= (redbox.rotationSpeed / (redbox.size/2/100))/180
         
         #   ground collision
+
+        
+        
         if pygame.sprite.spritecollide(redbox, map_group, False, pygame.sprite.collide_mask):
-            print("collision")
+            #print("collision")
+            #redbox.image.set_alpha(128)
             redbox.rotationSpeed = redbox.velocity.x*2
             
             if keyboard.is_pressed("w"):
                 redbox.velocity.y = -175 # jump height
-            else:
-                redbox.velocity.y *= 0
+            else:   
+                redbox.velocity.y *= -0.025
                 #redbox.velocity.y = 0
                 #redbox.pos.y = 0 - redbox.size/2
                 
         else:
+            #redbox.image.set_alpha(255)
             redbox.rotationSpeed = redbox.rotationSpeed/1.05 + redbox.velocity.x/25
     
-        cam_easing = 15
+        cam_easing = 20
         camera.x = lerp(camera.x, -redbox.pos.x*2 - wc.x - redbox.size/2, cam_easing)
-        camera.y = lerp(camera.y, -redbox.pos.y*2 - wc.y + 60 - redbox.size/2, cam_easing)
+        camera.y = lerp(camera.y, -redbox.pos.y*2 - wc.y - redbox.size/2 + 60, cam_easing)
                 
         pygame.display.flip()
         
