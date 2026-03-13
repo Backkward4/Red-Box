@@ -6,6 +6,8 @@ import os
 import random
 from pygame.locals import QUIT
 from pygame.math import Vector2
+import tkinter as tk
+from tkinter import filedialog
 
 pygame.init()
 
@@ -13,6 +15,10 @@ window = Vector2(1000, 600)
 screen = pygame.display.set_mode((window.x, window.y))
 pygame.display.set_caption("RED BOX")
 pygame.mouse.set_visible(False)
+
+
+root = tk.Tk()
+root.withdraw()
 
 
 base_path = os.path.dirname(__file__)
@@ -27,7 +33,7 @@ assets = {
 }
 
 maps = {
-    "testlevel": pygame.image.load(os.path.join(base_path, "maps", "testlevel.png")).convert_alpha()
+    "testlevel": pygame.image.load(os.path.join(base_path, "maps", "testlevel.png")).convert_alpha(),
 }
 
 window_icon = pygame.transform.scale(assets["box"], (32, 32))
@@ -40,20 +46,6 @@ wc = center + camera
 gravity = Vector2(0, -9.81)
 
 clock = pygame.time.Clock()
-
-class Map(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = maps["testlevel"]
-        #self.image = pygame.transform.scale(maps["testlevel"], (2000, 800))
-        self.rect = self.image.get_rect(topleft = (x, y))
-        self.pos = Vector2()
-        self.mask = pygame.mask.from_surface(self.image)
-
-    def update(self, maptitle):
-        self.image = maps[maptitle]
-        
-cur_map = Map(0, 0)
 
 #   custom class for the player, might be simplified for all objects to use polygon instead
 class playerBox(pygame.sprite.Sprite):
@@ -72,6 +64,24 @@ class playerBox(pygame.sprite.Sprite):
         
 redbox = playerBox(window.x/2, window.y/2)
 
+class Map(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = maps["testlevel"]
+        self.rect = self.image.get_rect(topleft = (x, y))
+        self.pos = Vector2()
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def update(self, filepath):
+        global camera
+        redbox.pos = Vector2(-230, -250)
+        redbox.velocity = Vector2(0, 0)
+        camera = Vector2(-230, -250)
+        self.image = pygame.image.load(filepath).convert_alpha()
+        self.mask = pygame.mask.from_surface(self.image)
+        
+cur_map = Map(0, 0)
+
 rb_group = pygame.sprite.Group()
 map_group = pygame.sprite.Group()
 
@@ -79,12 +89,19 @@ rb_group.add(redbox)
 map_group.add(cur_map)
 
 async def main():
+    global camera, wc
     cloud_group = pygame.sprite.Group()
+    loading = False
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == QUIT: # Exit when the window is closed
                 running = False
+
+        if loading:
+            await asyncio.sleep(0)
+            print("loading")
+            return
     
         #   world center
         wc = center + camera
@@ -115,7 +132,9 @@ async def main():
 
         screen.blit(bg_face, bg_face_rect)
 
-
+        #print(redbox.pos)
+        #print(cur_map.pos)
+        
         # Clouds
         cloud_amount = 3
         cloud_minsize = 1
@@ -128,10 +147,9 @@ async def main():
                     random.uniform(cloud_minsize, cloud_maxsize),
                     random.uniform(cloud_minsize, cloud_maxsize)/2
                     )
-                #print(self.scale)
                 self.image = assets["cloud" + str(random.randint(1, 2))]
                 self.image_scaled = pygame.transform.scale(
-                    assets["cloud" + str(random.randint(1, 2))], self.scale
+                    assets["cloud" + str(random.randint(1, 2))], (int(self.scale.x), int(self.scale.y))
                     )
                 self.speed = random.uniform(0.2, 1)
                 self.rect = self.image_scaled.get_rect()
@@ -147,10 +165,10 @@ async def main():
             camera.x/15 + wc.x/15 + window.x/2 - self.scale.x/2 + self.temp_center[0],
             camera.y/15 + wc.y/15 + window.y/2 - self.scale.y/2 + self.temp_center[1]
             )
-                self.image.set_alpha(abs(self.rect.center[0] - bg_face_pos.x + bg_face_size/8)/3)
-                self.image_scaled = pygame.transform.scale(
-                    assets["cloud" + str(random.randint(1, 2))], self.scale
-                    )
+                self.image.set_alpha(int(abs(self.rect.center[0] - bg_face_pos.x + bg_face_size/8)/3))
+
+        cloud_group.update()
+        cloud_group.draw(screen)
 
 
         cur_map.pos = wc + Vector2(
@@ -158,10 +176,6 @@ async def main():
             cur_map.image.get_height()/2
             )
         cur_map.rect = cur_map.image.get_rect(center = cur_map.pos)
-        #cur_map.mask = pygame.mask.from_surface(cur_map.image)
-        
-        #cur_map.update("testlevel")
-        #map_group.draw(screen)
         screen.blit(cur_map.image, cur_map.rect.topleft)
 
         
@@ -170,30 +184,18 @@ async def main():
             cloud_group.add(newcloud)
 
         #   draws redbox where it should be on the screen
- #       rb_screen = redbox.rect.move(redbox.pos.x + wc.x, redbox.pos.y + wc.y)
- #       rb_image = pygame.transform.scale(assets["box"], (redbox.size, redbox.size))
- #       rb_image = pygame.transform.rotate(rb_image, redbox.rotation)
- #       rb_pos = (
- #           rb_screen.x + redbox.size/2,
- #           rb_screen.y + redbox.size/2
- #           )
- #       rb_rect = rb_image.get_rect(center = rb_pos)
-
-        cloud_group.update()
-        cloud_group.draw(screen)
-
-        #screen.blit(rb_image, rb_rect.topleft)
+        redbox_lastpos = redbox.pos
 
         redbox.pos += redbox.velocity*dT
         rb_rotated = pygame.transform.rotate(redbox.image, redbox.rotation)
 
-        redbox.rect.center = redbox.pos
+        redbox.rect.center = (int(redbox.pos.x), int(redbox.pos.y))
         target_center = wc - camera + redbox.pos + wc/2 + Vector2(
             redbox.size,
             redbox.size)/2
         
         redbox_old_center = redbox.rect.center
-        redbox.rect = rb_rotated.get_rect(center = target_center)
+        redbox.rect = rb_rotated.get_rect(center = (int(target_center.x), int(target_center.y)))
         
         screen.blit(rb_rotated, redbox.rect.topleft)
 
@@ -228,33 +230,41 @@ async def main():
         redbox.rotation -= (redbox.rotationSpeed / (redbox.size/2/100))/180
         
         #   ground collision
-
-        
-        
         if pygame.sprite.spritecollide(redbox, map_group, False, pygame.sprite.collide_mask):
-            #print("collision")
-            #redbox.image.set_alpha(128)
             redbox.rotationSpeed = redbox.velocity.x*2
             
             if keyboard.is_pressed("w"):
                 redbox.velocity.y = -175 # jump height
-            else:   
-                redbox.velocity.y *= -0.025
-                #redbox.velocity.y = 0
-                #redbox.pos.y = 0 - redbox.size/2
+            else:
+                redbox.pos = redbox_lastpos
+                redbox.velocity.y = 0
                 
         else:
-            #redbox.image.set_alpha(255)
-            redbox.rotationSpeed = redbox.rotationSpeed/1.05 + redbox.velocity.x/25
+            redbox.rotationSpeed = redbox.rotationSpeed/1.05 + redbox.velocity.x/30
     
         cam_easing = 20
         camera.x = lerp(camera.x, -redbox.pos.x*2 - wc.x - redbox.size/2, cam_easing)
         camera.y = lerp(camera.y, -redbox.pos.y*2 - wc.y - redbox.size/2 + 60, cam_easing)
-                
+
+        #   custom map loading
+        if keyboard.is_pressed("ctrl") and keyboard.is_pressed("shift") and keyboard.is_pressed("p"):
+            file_path = filedialog.askopenfilename(title="Select a File", filetypes=[("All Files", "*.*")])
+            
+            if file_path:
+                cur_map.update(file_path)
+                print(f"Selected file: {file_path}")
+                continue
+
+
+        if keyboard.is_pressed("r"):
+            redbox.velocity = Vector2(0, 0)
+            redbox.pos = Vector2(0, 0)
+            #camera = Vector2(redbox.pos.x - 500, -200)
+            
         pygame.display.flip()
-        
+
     # Quit PyGame
-    
     pygame.quit()
+
 
 asyncio.run(main())
