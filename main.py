@@ -176,7 +176,6 @@ async def main():
             cur_map.image.get_height()/2
             )
         cur_map.rect = cur_map.image.get_rect(center = cur_map.pos)
-        screen.blit(cur_map.image, cur_map.rect.topleft)
 
         
         if len(cloud_group) < cloud_amount:
@@ -196,13 +195,28 @@ async def main():
         
         redbox_old_center = redbox.rect.center
         redbox.rect = rb_rotated.get_rect(center = (int(target_center.x), int(target_center.y)))
-        
-        screen.blit(rb_rotated, redbox.rect.topleft)
 
         redbox.mask = pygame.mask.from_surface(rb_rotated)
         
         redbox_maxspeed = 200
         movementEasing = 20
+
+        shadow_canvas = pygame.Surface((window.x, window.y), pygame.SRCALPHA)
+        shadow_offset = Vector2(3.5, 11)
+        shadow_alpha = 30
+
+        map_sil = pygame.mask.from_surface(cur_map.image).to_surface(setcolor=(0,0,0,255), unsetcolor=(0,0,0,0))
+        shadow_canvas.blit(map_sil, cur_map.rect.topleft + shadow_offset)
+        rb_sil = pygame.mask.from_surface(rb_rotated).to_surface(setcolor=(0,0,0,255), unsetcolor=(0,0,0,0))
+        shadow_canvas.blit(rb_sil, redbox.rect.topleft + shadow_offset)
+
+        
+        shadow_canvas.set_alpha(shadow_alpha)
+        screen.blit(shadow_canvas, (0, 0))
+
+
+        screen.blit(cur_map.image, cur_map.rect.topleft)
+        screen.blit(rb_rotated, redbox.rect.topleft)
     
         def lerp(start, end, amt):
             return (start * amt + end) / amt + 1
@@ -260,7 +274,7 @@ async def main():
             redbox.velocity = Vector2(0, 0)
             redbox.pos = Vector2(0, 0)
             #camera = Vector2(redbox.pos.x - 500, -200)
-            
+
         pygame.display.flip()
 
     # Quit PyGame
