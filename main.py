@@ -16,10 +16,8 @@ screen = pygame.display.set_mode((window.x, window.y))
 pygame.display.set_caption("RED BOX")
 pygame.mouse.set_visible(False)
 
-
 root = tk.Tk()
 root.withdraw()
-
 
 base_path = os.path.dirname(__file__)
 
@@ -89,8 +87,9 @@ rb_group.add(redbox)
 map_group.add(cur_map)
 
 async def main():
-    global camera, wc
+    global camera, wc, shadows_enabled
     cloud_group = pygame.sprite.Group()
+    shadows_enabled = True
     loading = False
     running = True
     while running:
@@ -106,6 +105,7 @@ async def main():
         #   world center
         wc = center + camera
         dT = clock.tick(60) / 1000.0
+        print(dT)
         await asyncio.sleep(0)
 
 
@@ -201,18 +201,19 @@ async def main():
         redbox_maxspeed = 200
         movementEasing = 20
 
-        shadow_canvas = pygame.Surface((window.x, window.y), pygame.SRCALPHA)
-        shadow_offset = Vector2(3.5, 11)
-        shadow_alpha = 30
+        #   shadows
+        if shadows_enabled:
+            shadow_canvas = pygame.Surface((window.x, window.y), pygame.SRCALPHA)
+            shadow_offset = Vector2(3.5, 11)
+            shadow_alpha = 30
+            
+            map_sil = pygame.mask.from_surface(cur_map.image).to_surface(setcolor=(0,0,0,255), unsetcolor=(0,0,0,0))
+            shadow_canvas.blit(map_sil, cur_map.rect.topleft + shadow_offset)
+            rb_sil = pygame.mask.from_surface(rb_rotated).to_surface(setcolor=(0,0,0,255), unsetcolor=(0,0,0,0))
+            shadow_canvas.blit(rb_sil, redbox.rect.topleft + shadow_offset)
 
-        map_sil = pygame.mask.from_surface(cur_map.image).to_surface(setcolor=(0,0,0,255), unsetcolor=(0,0,0,0))
-        shadow_canvas.blit(map_sil, cur_map.rect.topleft + shadow_offset)
-        rb_sil = pygame.mask.from_surface(rb_rotated).to_surface(setcolor=(0,0,0,255), unsetcolor=(0,0,0,0))
-        shadow_canvas.blit(rb_sil, redbox.rect.topleft + shadow_offset)
-
-        
-        shadow_canvas.set_alpha(shadow_alpha)
-        screen.blit(shadow_canvas, (0, 0))
+            shadow_canvas.set_alpha(shadow_alpha)
+            screen.blit(shadow_canvas, (0, 0))
 
 
         screen.blit(cur_map.image, cur_map.rect.topleft)
@@ -269,6 +270,12 @@ async def main():
                 print(f"Selected file: {file_path}")
                 continue
 
+        if keyboard.is_pressed("ctrl") and keyboard.is_pressed("s"):
+            if not temp:
+                shadows_enabled = not shadows_enabled
+                temp = True
+        else:
+            temp = False
 
         if keyboard.is_pressed("r"):
             redbox.velocity = Vector2(0, 0)
