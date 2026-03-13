@@ -41,7 +41,7 @@ center = Vector2(window.x/2, window.y/2)
 camera = Vector2(0, 0)
 wc = center + camera
 
-gravity = Vector2(0, -9.81)
+gravity = Vector2(0, -15)
 
 clock = pygame.time.Clock()
 
@@ -110,7 +110,7 @@ async def main():
 
 
         #   applies gravity constantly
-        redbox.velocity -= gravity
+        redbox.velocity = Vector2(redbox.velocity.x, max(gravity.y*20, redbox.velocity.y - gravity.y))
     
         #   fallback background
         screen.fill((110, 179, 210))
@@ -249,7 +249,7 @@ async def main():
             redbox.rotationSpeed = redbox.velocity.x*2
             
             if keyboard.is_pressed("w"):
-                redbox.velocity.y = -175 # jump height
+                redbox.velocity.y = -300 # jump height
             else:
                 redbox.pos = redbox_lastpos
                 redbox.velocity.y = 0
